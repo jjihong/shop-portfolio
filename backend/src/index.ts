@@ -21,10 +21,7 @@ const PORT = process.env.PORT || 4000;
 // CORS 설정: 프론트엔드가 http://localhost:5173에서 이 서버로 요청할 수 있도록 허용
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "https://shop-portfolio-front.vercel.app",
-    ],
+    origin: ["http://localhost:5173", "https://shop-portfolio-six.vercel.app/"],
   }),
 ); // 요청 본문(body)을 JSON 형식으로 파싱
 app.use(express.json());
