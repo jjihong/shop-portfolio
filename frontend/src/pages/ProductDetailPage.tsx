@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { API_URL } from '../config';
 
 interface Product {
   id: number;
@@ -17,7 +18,7 @@ export default function ProductDetailPage() {
   const { id } = useParams();
   const [product, setProduct] = useState<Product | null>(null);
   useEffect(() => {
-    fetch(`http://localhost:4000/api/products/${id}`)
+    fetch(`${API_URL}/api/products/${id}`)
       .then(res => res.json())
       .then(setProduct);
   }, [id]);

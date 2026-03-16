@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { API_URL } from '../../config';
 
 interface OrderItem {
   id: number;
@@ -21,7 +22,7 @@ export default function AdminOrderPage() {
   const token = localStorage.getItem("token");
 
   const fetchOrders = () => {
-    fetch("http://localhost:4000/api/admin/orders", {
+    fetch(`${API_URL}/api/admin/orders`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
@@ -31,7 +32,7 @@ export default function AdminOrderPage() {
   useEffect(() => { fetchOrders(); }, [token]);
 
   const handleStatusChange = async (id: number, status: string) => {
-    await fetch(`http://localhost:4000/api/admin/orders/${id}/status`, {
+    await fetch(`${API_URL}/api/admin/orders/${id}/status`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",

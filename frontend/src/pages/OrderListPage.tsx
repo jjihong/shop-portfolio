@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { API_URL } from '../config';
 
 interface OrderItem {
   id: number;
@@ -18,7 +19,7 @@ export default function OrderListPage() {
   const token = localStorage.getItem("token");
 
   useEffect(() => {
-    fetch("http://localhost:4000/api/orders", {
+    fetch(`${API_URL}/api/orders`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())

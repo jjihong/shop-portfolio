@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { API_URL } from '../config';
 
 interface CartItem {
   id: number;
@@ -15,7 +16,7 @@ export default function CartPage() {
   const token = localStorage.getItem("token");
 
   const fetchCart = useCallback(() => {
-    fetch("http://localhost:4000/api/cart", {
+    fetch(`${API_URL}/api/cart`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
@@ -26,7 +27,7 @@ export default function CartPage() {
 
   // 나머지 함수들 동일
   const updateQuantity = async (id: number, quantity: number) => {
-    await fetch(`http://localhost:4000/api/cart/${id}`, {
+    await fetch(`${API_URL}/api/cart/${id}`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -38,7 +39,7 @@ export default function CartPage() {
   };
 
   const deleteItem = async (id: number) => {
-    await fetch(`http://localhost:4000/api/cart/${id}`, {
+    await fetch(`${API_URL}/api/cart/${id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -46,7 +47,7 @@ export default function CartPage() {
   };
 
   const placeOrder = async () => {
-    await fetch("http://localhost:4000/api/orders", {
+    await fetch(`${API_URL}/api/orders`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
     });

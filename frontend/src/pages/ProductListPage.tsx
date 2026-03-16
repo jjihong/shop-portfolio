@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { API_URL } from '../config';
 
 interface Product {
   id: number;
@@ -19,7 +20,7 @@ export default function ProductListPage() {
 
   useEffect(() => {
     const params = new URLSearchParams(searchParams);
-    fetch(`http://localhost:4000/api/products?${params}`)
+    fetch(`${API_URL}/api/products?${params}`)
       .then(res => res.json())
       .then(setProducts);
   }, [searchParams]);

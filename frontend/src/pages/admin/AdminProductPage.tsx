@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_URL } from '../../config';
 
 interface Product {
   id: number;
@@ -21,7 +22,7 @@ export default function AdminProductPage() {
   const navigate = useNavigate();
 
   const fetchProducts = () => {
-    fetch("http://localhost:4000/api/products")
+    fetch(`${API_URL}/api/products`)
       .then((res) => res.json())
       .then(setProducts);
   };
@@ -30,8 +31,8 @@ export default function AdminProductPage() {
 
   const handleSubmit = async () => {
     const url = editId
-      ? `http://localhost:4000/api/admin/products/${editId}`
-      : "http://localhost:4000/api/admin/products";
+      ? `${API_URL}/api/admin/products/${editId}`
+      : `${API_URL}/api/admin/products`;
 
     await fetch(url, {
       method: editId ? "PATCH" : "POST",
@@ -66,7 +67,7 @@ export default function AdminProductPage() {
 
   const handleDelete = async (id: number) => {
     if (!confirm("삭제하시겠습니까?")) return;
-    await fetch(`http://localhost:4000/api/admin/products/${id}`, {
+    await fetch(`${API_URL}/api/admin/products/${id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });
