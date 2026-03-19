@@ -34,9 +34,12 @@ export default function AdminProductPage() {
   const navigate = useNavigate();
 
   const fetchProducts = () => {
-    fetch(`${API_URL}/api/products`)
+    // limit=1000: 관리자 페이지는 전체 상품 목록이 필요하므로 큰 값을 지정
+    // 백엔드의 /api/products 응답 형식이 배열 → { products, total, page, totalPages } 로 변경됐으므로
+    // data.products 로 접근해야 상품 배열을 올바르게 가져올 수 있음
+    fetch(`${API_URL}/api/products?limit=1000`)
       .then((res) => res.json())
-      .then((data) => setProducts(Array.isArray(data) ? data : []));
+      .then((data) => setProducts(Array.isArray(data.products) ? data.products : []));
   };
 
   useEffect(() => { fetchProducts(); }, []);
