@@ -35,6 +35,9 @@ model Product {
   categoryId  Int
   orderItems  OrderItem[]
   carts       Cart[]
+
+  // categoryId로 필터링하는 쿼리가 빈번하므로 인덱스 추가 (카테고리별 상품 조회 속도 개선)
+  @@index([categoryId])
 }
 
 model Order {
@@ -45,6 +48,9 @@ model Order {
   totalPrice Int
   createdAt  DateTime    @default(now())
   orderItems OrderItem[]
+
+  // userId로 필터링하는 쿼리가 빈번하므로 인덱스 추가 (내 주문 목록 조회 속도 개선)
+  @@index([userId])
 }
 
 model OrderItem {
@@ -64,4 +70,10 @@ model Cart {
   product   Product @relation(fields: [productId], references: [id])
   productId Int
   quantity  Int     @default(1)
+
+  // 같은 유저가 같은 상품을 중복으로 담지 못하도록 유니크 제약 추가
+  // 백엔드 로직에서도 중복을 처리하지만, DB 레벨에서도 데이터 무결성 보장
+  @@unique([userId, productId])
+  // userId로 장바구니 조회가 빈번하므로 인덱스 추가
+  @@index([userId])
 }

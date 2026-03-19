@@ -13,6 +13,10 @@ export default function RegisterPage() {
 
   const handleRegister = async () => {
     if (!email || !password) { setError("이메일과 비밀번호를 입력해주세요."); return; }
+    // 이메일 형식 검증: 기본적인 이메일 패턴(xxx@xxx.xxx) 체크
+    // 이전 코드에는 형식 검증이 없어서 "abc" 같은 값도 회원가입 요청이 전송됐음
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) { setError("올바른 이메일 형식을 입력해주세요."); return; }
     if (password !== confirm) { setError("비밀번호가 일치하지 않습니다."); return; }
     if (password.length < 6) { setError("비밀번호는 6자 이상이어야 합니다."); return; }
     setError("");

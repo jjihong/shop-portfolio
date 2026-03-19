@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { API_URL } from "../config";
 
@@ -14,14 +14,25 @@ interface Product {
 export default function ProductListPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  // 네트워크/서버 에러 발생 시 유저에게 피드백을 주기 위한 상태
+  const [error, setError] = useState<string | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
+  // 검색 디바운싱용 타이머 ref
+  // 타이핑할 때마다 API를 호출하면 불필요한 요청이 과다하게 발생하므로
+  // 300ms 동안 추가 입력이 없을 때만 searchParams를 업데이트해 API를 호출함
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setLoading(true);
+    // 이전 에러 초기화 (재검색 시 이전 에러 메시지가 남아있지 않도록)
+    setError(null);
     const params = new URLSearchParams(searchParams);
     fetch(`${API_URL}/api/products?${params}`)
       .then((res) => res.json())
       .then((data) => { setProducts(Array.isArray(data) ? data : []); })
+      // 이전 코드에는 .catch가 없어서 네트워크 오류 발생 시 유저에게 아무 피드백이 없었음
+      // 수정 후: 에러 상태를 저장해 화면에 안내 메시지 표시
+      .catch(() => setError("상품을 불러오는 데 실패했습니다. 잠시 후 다시 시도해주세요."))
       .finally(() => setLoading(false));
   }, [searchParams]);
 
@@ -35,12 +46,28 @@ export default function ProductListPage() {
         <input
           placeholder="상품명으로 검색..."
           defaultValue={searchParams.get("search") ?? ""}
-          onChange={(e) => setSearchParams(e.target.value ? { search: e.target.value } : {})}
+          onChange={(e) => {
+            const value = e.target.value;
+            // 이전 타이머가 있으면 취소 (연속 입력 시 이전 타이머 리셋)
+            if (debounceRef.current) clearTimeout(debounceRef.current);
+            // 300ms 후에 searchParams 업데이트 (그 안에 또 타이핑하면 다시 리셋됨)
+            debounceRef.current = setTimeout(() => {
+              setSearchParams(value ? { search: value } : {});
+            }, 300);
+          }}
           className="border border-gray-200 rounded-lg pl-10 pr-4 py-2.5 w-full focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm bg-white"
         />
       </div>
 
-      {loading ? (
+      {/* 에러 발생 시 로딩/목록 대신 에러 메시지를 표시 */}
+      {error ? (
+        <div className="text-center py-24 text-red-400">
+          <svg className="w-12 h-12 mx-auto mb-3 text-red-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+          </svg>
+          {error}
+        </div>
+      ) : loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="bg-white rounded-2xl ring-1 ring-gray-100 p-5 animate-pulse">

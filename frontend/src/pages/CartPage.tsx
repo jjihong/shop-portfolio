@@ -13,6 +13,13 @@ interface CartItem {
 export default function CartPage() {
   const [items, setItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
+  // 처리 중인 아이템 id를 관리해서 버튼 중복 클릭 방지
+  // null이면 아무 작업도 없는 상태, 숫자면 해당 id의 아이템이 처리 중
+  const [processingId, setProcessingId] = useState<number | null>(null);
+  // 주문 중 상태 (주문하기 버튼 중복 클릭 방지)
+  const [ordering, setOrdering] = useState(false);
+  // 주문 실패 시 인라인 에러 메시지 (alert 대신 UI 내에 표시)
+  const [orderError, setOrderError] = useState<string | null>(null);
   const { token } = useAuth();
   const navigate = useNavigate();
 
@@ -27,26 +34,39 @@ export default function CartPage() {
 
   const updateQuantity = async (id: number, quantity: number) => {
     if (quantity < 1) return;
+    // 처리 중인 아이템 id를 기록해 버튼을 비활성화함
+    // API 응답이 오기 전까지 같은 버튼을 연속 클릭하는 것을 방지
+    setProcessingId(id);
     await apiFetch(
       `${API_URL}/api/cart/${id}`,
       { method: "PATCH", body: JSON.stringify({ quantity }) },
       token
     );
-    fetchCart();
+    await fetchCart();
+    setProcessingId(null);
   };
 
   const deleteItem = async (id: number) => {
+    setProcessingId(id);
     await apiFetch(`${API_URL}/api/cart/${id}`, { method: "DELETE" }, token);
-    fetchCart();
+    await fetchCart();
+    setProcessingId(null);
   };
 
   const placeOrder = async () => {
+    // 주문 중 상태로 전환해 주문하기 버튼 비활성화
+    setOrdering(true);
+    // 이전 에러 메시지 초기화
+    setOrderError(null);
     const res = await apiFetch(`${API_URL}/api/orders`, { method: "POST" }, token);
     if (res.ok) {
       navigate("/orders");
     } else {
       const data = await res.json();
-      alert(data.message ?? "주문에 실패했습니다.");
+      // 이전 코드: alert()로 브라우저 기본 팝업 표시 → UI 불일치, 사용성 저하
+      // 수정 후: 인라인 에러 메시지로 다른 페이지와 일관된 UX 제공
+      setOrderError(data.message ?? "주문에 실패했습니다.");
+      setOrdering(false);
     }
   };
 
@@ -89,12 +109,15 @@ export default function CartPage() {
                 <div className="flex items-center border border-gray-200 rounded-lg shrink-0">
                   <button
                     onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                    className="px-2.5 py-1 text-gray-500 hover:text-gray-700 cursor-pointer text-sm"
+                    // 해당 아이템이 처리 중일 때 버튼 비활성화 (중복 클릭 방지)
+                    disabled={processingId === item.id}
+                    className="px-2.5 py-1 text-gray-500 hover:text-gray-700 cursor-pointer text-sm disabled:opacity-40 disabled:cursor-not-allowed"
                   >−</button>
                   <span className="px-2.5 py-1 text-sm font-semibold text-gray-800 min-w-[2rem] text-center">{item.quantity}</span>
                   <button
                     onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                    className="px-2.5 py-1 text-gray-500 hover:text-gray-700 cursor-pointer text-sm"
+                    disabled={processingId === item.id}
+                    className="px-2.5 py-1 text-gray-500 hover:text-gray-700 cursor-pointer text-sm disabled:opacity-40 disabled:cursor-not-allowed"
                   >+</button>
                 </div>
                 <p className="text-sm font-bold text-gray-700 w-24 text-right shrink-0">
@@ -102,7 +125,8 @@ export default function CartPage() {
                 </p>
                 <button
                   onClick={() => deleteItem(item.id)}
-                  className="text-gray-300 hover:text-red-500 transition cursor-pointer shrink-0"
+                  disabled={processingId === item.id}
+                  className="text-gray-300 hover:text-red-500 transition cursor-pointer shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -111,17 +135,25 @@ export default function CartPage() {
               </div>
             ))}
           </div>
-          <div className="border-t border-gray-100 px-6 py-5 flex items-center justify-between">
-            <div>
-              <p className="text-xs text-gray-400 mb-1">총 결제 금액</p>
-              <p className="text-2xl font-bold text-orange-600">{total.toLocaleString()}원</p>
+          <div className="border-t border-gray-100 px-6 py-5">
+            {/* 주문 실패 시 인라인 에러 메시지 표시 */}
+            {orderError && (
+              <p className="text-red-500 text-sm bg-red-50 rounded-lg px-3 py-2 mb-4">{orderError}</p>
+            )}
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-400 mb-1">총 결제 금액</p>
+                <p className="text-2xl font-bold text-orange-600">{total.toLocaleString()}원</p>
+              </div>
+              <button
+                onClick={placeOrder}
+                // 주문 처리 중일 때 버튼 비활성화 (중복 주문 방지)
+                disabled={ordering}
+                className="bg-orange-600 text-white px-7 py-3 rounded-xl hover:bg-orange-700 transition font-semibold cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {ordering ? "처리 중..." : "주문하기"}
+              </button>
             </div>
-            <button
-              onClick={placeOrder}
-              className="bg-orange-600 text-white px-7 py-3 rounded-xl hover:bg-orange-700 transition font-semibold cursor-pointer"
-            >
-              주문하기
-            </button>
           </div>
         </div>
       )}

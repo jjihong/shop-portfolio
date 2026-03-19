@@ -42,3 +42,17 @@ app.use("/api/admin", adminRouter);
 app.listen(PORT, () => {
   console.log(`서버 실행 중: http://localhost:${PORT}`);
 });
+
+// 전역 에러 핸들러: 라우터에서 next(err)로 전달된 에러 또는 예상치 못한 에러를 일괄 처리
+// 이 핸들러가 없으면 에러 발생 시 서버가 크래시되거나 에러 스택이 클라이언트에 노출될 수 있음
+app.use(
+  (
+    err: Error,
+    req: express.Request,
+    res: express.Response,
+    _next: express.NextFunction,
+  ) => {
+    console.error("전역 에러:", err);
+    res.status(500).json({ message: "서버 오류가 발생했습니다." });
+  },
+);
